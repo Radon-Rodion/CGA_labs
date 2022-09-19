@@ -1,0 +1,39 @@
+﻿<Window x:Class="CGA_labs.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:CGA_labs"
+        mc:Ignorable="d"
+        Title="АКГ" Height="450" Width="800" KeyDown="Window_KeyDown">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="27*"/>
+            <RowDefinition Height="191*"/>
+        </Grid.RowDefinitions>
+        <Grid x:Name="Panel" Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="100*"/>
+                <ColumnDefinition Width="200*"/>
+                <ColumnDefinition Width="200*"/>
+            </Grid.ColumnDefinitions>
+            <Grid Grid.Column="0">
+                <Button x:Name="OpenFile" Content="Загрузить модель" Click="OpenFile_Click" />
+            </Grid>
+            <Grid Grid.Column="1">
+                <Label Content="Модель: " />
+                <RadioButton x:Name="MoveModelRadio" GroupName="KeydownAction" Content="Перемещение" IsChecked="True" Margin="30,20,0,0" Checked="MoveModelRadio_Checked" />
+                <RadioButton x:Name="RotateModelRadio" GroupName="KeydownAction" Content="Вращение" Margin="30,36,0,0" Checked="RotateModelRadio_Checked" />
+            </Grid>
+            <Grid Grid.Column="2">
+                <Label Content="Камера: " />
+                <RadioButton x:Name="MoveCameraRadio" GroupName="KeydownAction" Content="Перемещение" Margin="30,20,0,0" Checked="MoveCameraRadio_Checked" />
+                <RadioButton x:Name="RotateCameraRadio" GroupName="KeydownAction" Content="Вращение" Margin="30,36,0,0" Checked="RotateCameraRadio_Checked" />
+            </Grid>
+        </Grid>
+        <Grid x:Name="pictureContainer" Grid.Row="1" >
+            <Image x:Name="picture">
+            </Image>
+        </Grid>
+    </Grid>
+</Window>

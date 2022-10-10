@@ -40,6 +40,7 @@ namespace CGA_labs.Logic
 
                 var points = new List<Vector4>();
                 var faces = new List<List<Vector3>>();
+                var normals = new List<Vector3>();
                 foreach (var line in fileLines)
                 {
                     if(line.Length > 2)
@@ -51,14 +52,17 @@ namespace CGA_labs.Logic
                             case "f ":
                                 faces.Add(ToFace(line));
                                 break;
+                            case "vn":
+                                normals.Add(ToNormale(line));
+                                break;
                         }
                 }
 
-                return new Model(points, faces);
+                return new Model(points, faces, normals);
             }
             catch (Exception ex)
             {
-                VisualisationLogic.ShowErrorMessage(ex.Message);
+                CommonVisualisationLogic.ShowErrorMessage(ex.Message);
                 return null;
             }
         }
@@ -81,6 +85,12 @@ namespace CGA_labs.Logic
         {
             string[] values = line.Replace('.',',').Split(' ', StringSplitOptions.RemoveEmptyEntries);
             return new Vector4(float.Parse(values[1]), float.Parse(values[2]), float.Parse(values[3]), 1f);
+        }
+
+        private static Vector3 ToNormale(string line)
+        {
+            string[] values = line.Replace('.', ',').Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            return new Vector3(float.Parse(values[1]), float.Parse(values[2]), float.Parse(values[3]));
         }
     }
 }

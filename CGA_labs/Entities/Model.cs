@@ -11,11 +11,13 @@ namespace CGA_labs.Entities
     {
         public List<Vector4> Points { get; set; }
         public List<List<Vector3>> Faces { get; set; }
+        public List<Vector3> Normals { get; set; }
 
-        public Model(List<Vector4> points, List<List<Vector3>> faces)
+        public Model(List<Vector4> points, List<List<Vector3>> faces, List<Vector3> normals)
         {
             Points = points;
             Faces = faces;
+            Normals = normals;
         }
 
         public object Clone()
@@ -36,7 +38,13 @@ namespace CGA_labs.Entities
                 }
                 newFaces.Add(newList);
             }
-            return new Model(newPoints, Faces);
+
+            var newNormals = new List<Vector3>();
+            foreach(var n in Normals)
+            {
+                newNormals.Add(n);
+            }
+            return new Model(newPoints, newFaces, newNormals);
         }
     }
 }

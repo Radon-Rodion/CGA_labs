@@ -52,7 +52,7 @@ namespace CGA_labs.Entities
             Width = (int)width;
             AspectRatio = (float)(width / height);
             NearPlaneDistance = 0.1f;
-            FarPlaneDistance = 100f;
+            FarPlaneDistance = 1000f;
             XMin = 0;
             YMin = 0;
             

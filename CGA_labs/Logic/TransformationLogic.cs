@@ -24,6 +24,7 @@ namespace CGA_labs.Logic
                 model.Points[i] /= model.Points[i].W;
             }
 
+            TransformNormals(model, modelParams);
             TransformToViewPort(model, modelParams, w);
 
             /*var newPoints = new List<Vector4>();
@@ -79,6 +80,14 @@ namespace CGA_labs.Logic
             {
                 model.Points[i] = Vector4.Transform(model.Points[i], GetWindowMatrix(modelParams));
                 model.Points[i] = new Vector4(model.Points[i].X, model.Points[i].Y, model.Points[i].Z, w[i]);
+            }
+        }
+
+        private static void TransformNormals(Model model, ModelParams modelParams)
+        {
+            for (int i = 0; i < model.Normals.Count; i++)
+            {
+                model.Normals[i] = Vector3.Normalize(Vector3.TransformNormal(model.Normals[i], GetTransformMatrix(modelParams)));
             }
         }
     }

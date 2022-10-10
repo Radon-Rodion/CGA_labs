@@ -1,5 +1,6 @@
 ﻿using CGA_labs.Entities;
 using CGA_labs.Logic;
+using CGA_labs.Visualisation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,6 +27,7 @@ namespace CGA_labs
     public partial class MainWindow : Window
     {
         private IKeydownProcessor _keydownProcessor;
+        private AbstractVisualisator _visualisator;
         private ModelParams _params;
         private Model _model;
 
@@ -33,6 +35,7 @@ namespace CGA_labs
         {
             InitializeComponent();
             _keydownProcessor = new ModelMover();
+            _visualisator = new LambertVisualisator();
         }
 
         private void Window_KeyDown(object sender, KeyEventArgs e)
@@ -87,7 +90,7 @@ namespace CGA_labs
             Model modelMain = _model.Clone() as Model;
             TransformationLogic.TransformFromModelToView(modelMain, _params);
 
-            VisualisationLogic.DrawModel(bitmap, modelMain);
+            _visualisator.DrawModel(bitmap, modelMain);
             picture.Source = bitmap;
         }
     }

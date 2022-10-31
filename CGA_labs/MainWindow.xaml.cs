@@ -35,7 +35,7 @@ namespace CGA_labs
         {
             InitializeComponent();
             _keydownProcessor = new ModelMover();
-            _visualisator = new LambertVisualisator();
+            _visualisator = new PhongVisualisation();
         }
 
         private void Window_KeyDown(object sender, KeyEventArgs e)

@@ -90,8 +90,19 @@ namespace CGA_labs
             Model modelMain = _model.Clone() as Model;
             TransformationLogic.TransformFromModelToView(modelMain, _params);
 
-            _visualisator.DrawModel(bitmap, modelMain);
+            _visualisator.DrawModel(bitmap, modelMain, _params, TransformationLogic.TransformFromModelToWorld(_model.Clone() as Model, _params));
             picture.Source = bitmap;
+        }
+
+        private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            if(_params is not null)
+            {
+                var width = pictureContainer.ActualWidth;
+                var height = pictureContainer.ActualHeight;
+                _params = new ModelParams(width, height);
+                Draw((int)width, (int)height);
+            }
         }
     }
 }

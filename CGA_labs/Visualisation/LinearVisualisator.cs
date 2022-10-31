@@ -10,7 +10,7 @@ namespace CGA_labs.Visualisation
 {
     public class LinearVisualisator: AbstractVisualisator
     {
-        public override void DrawModel(WriteableBitmap bitmap, Model model)
+        public override void DrawModel(WriteableBitmap bitmap, Model model, ModelParams parameters, Model worldModel)
         {
             foreach (var face in model.Faces)
                 DrawFace(bitmap, model, face);

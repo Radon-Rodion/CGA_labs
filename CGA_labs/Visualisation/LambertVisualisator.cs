@@ -13,7 +13,7 @@ namespace CGA_labs.Visualisation
     {
         private float[,] _zBuffer;
 
-        public override void DrawModel(WriteableBitmap bitmap, Model model)
+        public override void DrawModel(WriteableBitmap bitmap, Model model, ModelParams parameters, Model worldModel)
         {
             _zBuffer = new float[(int)bitmap.Width, (int)bitmap.Height];
             for(int i = 0; i < _zBuffer.GetLength(0); i++)
@@ -23,18 +23,18 @@ namespace CGA_labs.Visualisation
                     _zBuffer[i, j] = 10;
                 }
             }
-
             foreach (var face in model.Faces)
             {
+                var cameraVector = Vector3.Normalize(new Vector3(parameters.CameraPositionX, parameters.CameraPositionY, parameters.CameraPositionZ) - GetFaceFirstPoint(worldModel, face));
                 var normal = GetNormal(model, face);
-                if (IsTriangleVisible(normal))//
+                if (IsTriangleVisible(normal, cameraVector))//
                 {
                     DrawFace(bitmap, model, face, normal);
                 }
             }
         }
 
-        private struct BesenhamVariables
+        protected struct BesenhamVariables
         {
             public int yGrowing;
             public float dz;
@@ -58,6 +58,7 @@ namespace CGA_labs.Visualisation
             public void IncrementX()
             {
                 err += yGrowing * dy;
+                z += dz;
                 while (err > dx)
                 {
                     err -= dx;
@@ -68,7 +69,7 @@ namespace CGA_labs.Visualisation
 
         private byte[] GetColorFromNormale(Vector3 normal)
         {
-                byte blue = 0;;
+                byte blue = 0;
                 byte green = (byte)(255* Math.Max(Vector3.Dot(normal, Vector3.UnitZ), 0));
                 byte red = 0;
                 byte alpha = 255;
@@ -76,7 +77,35 @@ namespace CGA_labs.Visualisation
                 return colorData;
         }
 
-        private void DrawFace(WriteableBitmap bitmap, Model model, List<Vector3> face, Vector3 normal)
+        protected virtual Vector3 GetNormalInPoint(Pixel pixel, Vector3 face)
+        {
+            return Vector3.Zero;
+        }
+
+        protected Action<Vector3> EveryPointAction = (normal) => { };
+        protected virtual Vector3 InterpolateNormals(Vector3 position, Vector3[] heights, Vector3[] normals)
+        {
+            return Vector3.Zero;
+        }
+
+        protected Vector3[] GetPointsFromFace(Model model, List<Vector3> face)
+        {
+            var result = new List<Vector3>();
+            foreach(var element in face)
+            {
+                var point = model.Points[(int)element.X];
+                result.Add(new Vector3(point.X, point.Y, point.Z * 1000));
+            }
+
+            return result.ToArray();
+        }
+
+        protected Vector3 GetCurrentPositionVector(int x, int y, float z)
+        {
+            return new Vector3(x, y, z * 1000);
+        }
+
+        protected virtual void DrawFace(WriteableBitmap bitmap, Model model, List<Vector3> face, Vector3 normal)
         {
             GetPixelColor = () => GetColorFromNormale(normal);
 
@@ -100,9 +129,10 @@ namespace CGA_labs.Visualisation
                 for (int y = besenham01.y; dy * y <= dy * besenham02.y; y += dy)
                 {
                     z += dz;
-                    if(x>=0 && x<bitmap.Width && y>=0 && y<bitmap.Height && z < _zBuffer[x, y])
+                    if (x >= 0 && x < bitmap.Width && y >= 0 && y < bitmap.Height && z < _zBuffer[x, y])
                     {
                         _zBuffer[x, y] = z;
+                        EveryPointAction(InterpolateNormals(GetCurrentPositionVector(x, y, z), GetPointsFromFace(model, face), null));
                         DrawPixel(bitmap, new Pixel(x, y, z));
                     }
                 }
@@ -123,6 +153,7 @@ namespace CGA_labs.Visualisation
                     if (x >= 0 && x < bitmap.Width && y >= 0 && y < bitmap.Height && z < _zBuffer[x, y])
                     {
                         _zBuffer[x, y] = z;
+                        EveryPointAction(InterpolateNormals(GetCurrentPositionVector(x, y, z), GetPointsFromFace(model, face), null));
                         DrawPixel(bitmap, new Pixel(x, y, z));
                     }
                 }
@@ -149,9 +180,9 @@ namespace CGA_labs.Visualisation
             return Vector3.Normalize(Vector3.Cross(side1, side2));*/
         }
 
-        private bool IsTriangleVisible(Vector3 triangleNormal)
+        private bool IsTriangleVisible(Vector3 triangleNormal, Vector3 camera)
         {
-            return triangleNormal.Z > 0;
+            return Vector3.Dot(triangleNormal, camera) >= -0.3f;
         }
     }
 }

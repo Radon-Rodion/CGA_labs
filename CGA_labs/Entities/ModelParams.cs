@@ -43,7 +43,7 @@ namespace CGA_labs.Entities
             TranslationZ = 0;
             CameraPositionX = 0;
             CameraPositionY = 0;
-            CameraPositionZ = 5;
+            CameraPositionZ = 3;
             CameraYaw = 0;
             CameraPitch = 0;
             CameraRoll = 0;

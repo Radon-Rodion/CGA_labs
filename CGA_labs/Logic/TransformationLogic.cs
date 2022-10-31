@@ -12,6 +12,19 @@ namespace CGA_labs.Logic
     {
         public static Matrix4x4 ModelWorldMatrix { get; set; }
 
+        public static Model TransformFromModelToWorld(Model model, ModelParams modelParams)
+        {
+            Matrix4x4 toWorldMatrix = GetTransformMatrix(modelParams);
+            float[] w = new float[model.Points.Count];
+            for (int i = 0; i < model.Points.Count; i++)
+            {
+                model.Points[i] = Vector4.Transform(model.Points[i], toWorldMatrix);
+
+                w[i] = model.Points[i].W;
+                model.Points[i] /= model.Points[i].W;
+            }
+            return model;
+        }
         public static void TransformFromModelToView(Model model, ModelParams modelParams)
         {
             Matrix4x4 totalProjctionMatix = GetTotalMatrix(modelParams);

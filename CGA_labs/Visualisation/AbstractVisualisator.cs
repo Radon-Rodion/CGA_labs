@@ -12,7 +12,8 @@ namespace CGA_labs.Visualisation
 {
     public abstract class AbstractVisualisator
     {
-        public abstract void DrawModel(WriteableBitmap bitmap, Model model);
+
+        public abstract void DrawModel(WriteableBitmap bitmap, Model model, ModelParams parameters, Model worldModel);
 
         protected virtual void DrawFace(WriteableBitmap bitmap, Model model, List<Vector3> faces)
         {
@@ -30,6 +31,14 @@ namespace CGA_labs.Visualisation
             Pixel point2 = GetFacePoint(model, face, index2);
 
             ActionWithLine((pix) => DrawPixel(bitmap, pix), point1, point2);
+        }
+
+        protected Vector3 GetFaceFirstPoint(Model model, List<Vector3> face)
+        {
+            int indexPoint = (int)face[0].X;
+            Vector4 point = model.Points[indexPoint];
+
+            return new Vector3(point.X, point.Y, point.Z);
         }
 
         protected virtual Pixel GetFacePoint(Model model, List<Vector3> face, int i)

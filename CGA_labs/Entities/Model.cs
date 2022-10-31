@@ -16,8 +16,34 @@ namespace CGA_labs.Entities
         public Model(List<Vector4> points, List<List<Vector3>> faces, List<Vector3> normals)
         {
             Points = points;
-            Faces = faces;
+            Faces = SplitFacesOnTriangles(faces);
             Normals = normals;
+        }
+
+        private static List<List<Vector3>> SplitFacesOnTriangles(List<List<Vector3>> faces)
+        {
+            List<List<Vector3>> triangleFaces = new();
+            foreach (List<Vector3> face in faces)
+            {
+                if (face.Count < 3)
+                {
+                    throw new ArgumentException("The face should include 3 parameters.");
+                }
+
+                for (int i = 1; i < face.Count - 1; i++)
+                {
+                    List<Vector3> triangleFace = new()
+                    {
+                        face[0],
+                        face[i],
+                        face[i + 1]
+                    };
+
+                    triangleFaces.Add(triangleFace);
+                }
+            }
+
+            return triangleFaces;
         }
 
         public object Clone()

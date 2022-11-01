@@ -118,7 +118,7 @@ namespace CGA_labs.Visualisation
                 dz = (to.Point.Z - from.Point.Z) / (to.Point.Y - from.Point.Y);
                 z = from.Point.Z;
                 x = from.Point.X;
-                y = (float)Math.Ceiling(from.Point.Y);
+                y = from.Point.Y;
                 dy0 = to.Point.Y - from.Point.Y;
                 dx0 = to.Point.X - from.Point.X;
                 dNormal = (to.Normal - from.Normal) / (to.Point.Y - from.Point.Y);
@@ -155,6 +155,8 @@ namespace CGA_labs.Visualisation
                 var dz = (line01.x - line02.x) != 0 ? (line01.z - line02.z) / (line01.x - line02.x) : 0;
                 var dNormal = (line01.normal - line02.normal) != Vector3.Zero ? (line01.normal - line02.normal) / (line01.x - line02.x) : Vector3.Zero;
                 var dCamera = (line01.camera - line02.camera) != Vector3.Zero ? (line01.camera - line02.camera) / (line01.x - line02.x) : Vector3.Zero;
+                int startX = (int)(dx < 0 ? Math.Floor(line01.x) : Math.Ceiling(line01.x));
+                int endX = (int)(dx < 0 ? Math.Ceiling(line02.x) : Math.Floor(line02.x));
                 for (int x = (int)line01.x; dx * x <= dx * line02.x; x += dx)
                 {
                     var z = line01.z+(x-line01.x)*dz;
@@ -178,7 +180,9 @@ namespace CGA_labs.Visualisation
                 var dz = (line12.x - line02.x) != 0 ? (line12.z - line02.z) / (line12.x - line02.x) : 0;
                 var dNormal = (line12.normal - line02.normal) != Vector3.Zero ? (line12.normal - line02.normal) / (line12.x - line02.x) : Vector3.Zero;
                 var dCamera = (line12.camera - line02.camera) != Vector3.Zero ? (line12.camera - line02.camera) / (line12.x - line02.x) : Vector3.Zero;
-                for (int x = (int)line12.x; dx * x <= dx * line02.x; x += dx)
+                int startX = (int)(dx < 0 ? Math.Floor(line12.x) : Math.Ceiling(line12.x));
+                int endX = (int)(dx < 0 ? Math.Ceiling(line02.x) : Math.Floor(line02.x));
+                for (int x = startX; dx * x <= dx * endX; x += dx)
                 {
                     var z = line12.z + (x - line12.x) * dz;
                     var normal = line12.normal + (x - line12.x) * dNormal;

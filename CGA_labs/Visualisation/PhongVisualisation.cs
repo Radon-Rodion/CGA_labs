@@ -22,7 +22,7 @@ namespace CGA_labs.Visualisation
             _cameraVector = (face, index) =>
             {
                 int indexPoint = (int)face[index].X;
-                Vector4 point = model.Points[indexPoint];
+                Vector4 point = worldModel.Points[indexPoint]; //TODO: tink about blicks
                 var facePoint = new Vector3(point.X, point.Y, point.Z);
 
                 return Vector3.Normalize(cameraGlobalVector - facePoint);
@@ -45,20 +45,21 @@ namespace CGA_labs.Visualisation
 
         private (int r, int g, int b) GetAmbientLighting()
         {
-            return (0, 30, 0);
+            return (15, 50, 15);
         }
 
         private (int r, int g, int b) GetDiffuseLighting(Vector3 normalInPoint)
         {
             var k = Vector3.Dot(normalInPoint, _lightVector);
-            return (0, (int)(150 * k), 0);
+            k = k > 0 ? k : 0;
+            return ((int)(50 * k), (int)(150 * k), (int)(50 * k));
         }
 
         private (int r, int g, int b) GetSpecularLighting(Vector3 normalInPoint, Vector3 cameraVector)
         {
             var vectorR = _lightVector - 2 * Vector3.Dot(_lightVector, normalInPoint) * normalInPoint;
-            var k = Vector3.Dot(vectorR, cameraVector)>0 ? Math.Pow(Vector3.Dot(vectorR, cameraVector), 0.9) : 0;
-            return ((int)(150 * k), (int)(150 * k), (int)(150 * k));
+            var k = Vector3.Dot(-vectorR, cameraVector)>0 ? Math.Pow(Vector3.Dot(-vectorR, cameraVector), 0.5) : 0;
+            return ((int)(150 * k), (int)(130 * k), (int)(150 * k));
         }
 
         private byte[] GetColorFromNormaleLightAndCamera(Vector3 normalInPoint, Vector3 cameraVector)

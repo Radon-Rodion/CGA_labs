@@ -3,13 +3,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 
 namespace CGA_labs.Visualisation
 {
-    public class LambertVisualisator: AbstractVisualisator
+    public class LambertVisualisation: AbstractVisualisation
     {
         private float[,] _zBuffer;
 

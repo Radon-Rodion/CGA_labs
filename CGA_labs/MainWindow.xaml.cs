@@ -27,7 +27,7 @@ namespace CGA_labs
     public partial class MainWindow : Window
     {
         private IKeydownProcessor _keydownProcessor;
-        private AbstractVisualisator _visualisator;
+        private AbstractVisualisation _visualisation;
         private ModelParams _params;
         private Model _model;
 
@@ -35,7 +35,7 @@ namespace CGA_labs
         {
             InitializeComponent();
             _keydownProcessor = new ModelMover();
-            _visualisator = new PhongVisualisation();
+            _visualisation = new PhongVisualisation();
         }
 
         private void Window_KeyDown(object sender, KeyEventArgs e)
@@ -90,7 +90,7 @@ namespace CGA_labs
             Model modelMain = _model.Clone() as Model;
             TransformationLogic.TransformFromModelToView(modelMain, _params);
 
-            _visualisator.DrawModel(bitmap, modelMain, _params, TransformationLogic.TransformFromModelToWorld(_model.Clone() as Model, _params));
+            _visualisation.DrawModel(bitmap, modelMain, _params, TransformationLogic.TransformFromModelToWorld(_model.Clone() as Model, _params));
             picture.Source = bitmap;
         }
 

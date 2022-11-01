@@ -1,16 +1,10 @@
 ﻿using CGA_labs.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CGA_labs.Logic
 {
     public static class TransformationLogic
     {
-        public static Matrix4x4 ModelWorldMatrix { get; set; }
 
         public static Model TransformFromModelToWorld(Model model, ModelParams modelParams)
         {
@@ -27,11 +21,11 @@ namespace CGA_labs.Logic
         }
         public static void TransformFromModelToView(Model model, ModelParams modelParams)
         {
-            Matrix4x4 totalProjctionMatix = GetTotalMatrix(modelParams);
+            Matrix4x4 totalProjectionMatrix = GetTotalMatrix(modelParams);
             float[] w = new float[model.Points.Count];
             for (int i = 0; i < model.Points.Count; i++)
             {
-                model.Points[i] = Vector4.Transform(model.Points[i], totalProjctionMatix);
+                model.Points[i] = Vector4.Transform(model.Points[i], totalProjectionMatrix);
 
                 w[i] = model.Points[i].W;
                 model.Points[i] /= model.Points[i].W;
@@ -50,10 +44,9 @@ namespace CGA_labs.Logic
 
         private static Matrix4x4 GetTransformMatrix(ModelParams modelParams)
         {
-            ModelWorldMatrix = Matrix4x4.CreateScale(modelParams.Scaling) 
+            return Matrix4x4.CreateScale(modelParams.Scaling) 
                 * Matrix4x4.CreateFromYawPitchRoll(modelParams.ModelYaw, modelParams.ModelPitch, modelParams.ModelRoll)
                 * Matrix4x4.CreateTranslation(modelParams.TranslationX, modelParams.TranslationY, modelParams.TranslationZ);
-            return ModelWorldMatrix;
         }
 
 
@@ -89,18 +82,20 @@ namespace CGA_labs.Logic
 
         private static void TransformToViewPort(Model model, ModelParams modelParams, float[] w)
         {
+            Matrix4x4 windowMatrix = GetWindowMatrix(modelParams);
             for (int i = 0; i < model.Points.Count; i++)
             {
-                model.Points[i] = Vector4.Transform(model.Points[i], GetWindowMatrix(modelParams));
+                model.Points[i] = Vector4.Transform(model.Points[i], windowMatrix);
                 model.Points[i] = new Vector4(model.Points[i].X, model.Points[i].Y, model.Points[i].Z, w[i]);
             }
         }
 
         private static void TransformNormals(Model model, ModelParams modelParams)
         {
+            Matrix4x4 transformMatrix = GetTransformMatrix(modelParams);
             for (int i = 0; i < model.Normals.Count; i++)
             {
-                model.Normals[i] = Vector3.Normalize(Vector3.TransformNormal(model.Normals[i], GetTransformMatrix(modelParams)));
+                model.Normals[i] = Vector3.Normalize(Vector3.TransformNormal(model.Normals[i], transformMatrix));
             }
         }
     }

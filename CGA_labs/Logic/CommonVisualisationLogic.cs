@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Windows.Media;
-using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Media.Imaging;
+﻿using System.Windows;
 
 namespace CGA_labs.Logic
 {

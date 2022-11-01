@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Windows.Media;
-using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace CGA_labs.Entities
+﻿namespace CGA_labs.Entities
 {
     public struct Pixel
     {

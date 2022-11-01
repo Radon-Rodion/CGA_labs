@@ -1,16 +1,13 @@
 ﻿using CGA_labs.Entities;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 using System.Windows;
 
 namespace CGA_labs.Visualisation
 {
-    public abstract class AbstractVisualisator
+    public abstract class AbstractVisualisation
     {
 
         public abstract void DrawModel(WriteableBitmap bitmap, Model model, ModelParams parameters, Model worldModel);

@@ -11,13 +11,22 @@ namespace CGA_labs.Entities
     {
         public List<Vector4> Points { get; set; }
         public List<List<Vector3>> Faces { get; set; }
+        public List<Vector3> Texels { get; set; }
         public List<Vector3> Normals { get; set; }
 
-        public Model(List<Vector4> points, List<List<Vector3>> faces, List<Vector3> normals)
+        public Vector3[][] NormalsMap { get; set; }
+        public Vector3[][] TexturesMap { get; set; }
+        public Vector3[][] ReflectionsMap { get; set; }
+
+        public Model(List<Vector4> points, List<List<Vector3>> faces, List<Vector3> normals, List<Vector3> texels, Vector3[][] reflectionsMap, Vector3[][] normalsMap, Vector3[][] texturesMap)
         {
             Points = points;
             Faces = SplitFacesOnTriangles(faces);
             Normals = normals;
+            Texels = texels;
+            ReflectionsMap = reflectionsMap;
+            TexturesMap = texturesMap;
+            NormalsMap = normalsMap;
         }
 
         private static List<List<Vector3>> SplitFacesOnTriangles(List<List<Vector3>> faces)
@@ -70,7 +79,18 @@ namespace CGA_labs.Entities
             {
                 newNormals.Add(n);
             }
-            return new Model(newPoints, newFaces, newNormals);
+
+            var newTexels = new List<Vector3>();
+            foreach (var t in Texels)
+            {
+                newTexels.Add(t);
+            }
+
+            var newTextureMap = TexturesMap?.Select(tmList => tmList.Select(tm => new Vector3(tm.X, tm.Y, tm.Z)).ToArray())?.ToArray();
+            var newNormalsMap = NormalsMap?.Select(nmList => nmList.Select(nm => new Vector3(nm.X, nm.Y, nm.Z)).ToArray())?.ToArray();
+            var newReflectionsMap = ReflectionsMap?.Select(rmList => rmList.Select(rm => new Vector3(rm.X, rm.Y, rm.Z)).ToArray())?.ToArray();
+
+            return new Model(newPoints, newFaces, newNormals, newTexels, newReflectionsMap, newNormalsMap, newTextureMap);
         }
     }
 }

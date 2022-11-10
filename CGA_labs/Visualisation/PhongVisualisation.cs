@@ -153,8 +153,8 @@ namespace CGA_labs.Visualisation
             while(line01.y <= Math.Floor(pNCsArr[1].Point.Y))
             {
                 var dz = (line01.x - line02.x) != 0 ? (line01.z - line02.z) / (line01.x - line02.x) : 0;
-                var dNormal = (line01.normal - line02.normal) != Vector3.Zero ? (line01.normal - line02.normal) / (line01.x - line02.x) : Vector3.Zero;
-                var dCamera = (line01.camera - line02.camera) != Vector3.Zero ? (line01.camera - line02.camera) / (line01.x - line02.x) : Vector3.Zero;
+                var dNormal = (line01.x - line02.x) != 0 ? (line01.normal - line02.normal) / (line01.x - line02.x) : Vector3.Zero;
+                var dCamera = (line01.x - line02.x) != 0 ? (line01.camera - line02.camera) / (line01.x - line02.x) : Vector3.Zero;
                 int startX = (int)(dx < 0 ? Math.Floor(line01.x) : Math.Ceiling(line01.x));
                 int endX = (int)(dx < 0 ? Math.Ceiling(line02.x) : Math.Floor(line02.x));
                 for (int x = (int)line01.x; dx * x <= dx * line02.x; x += dx)
@@ -178,8 +178,8 @@ namespace CGA_labs.Visualisation
             while(line12.y <= Math.Floor(pNCsArr[2].Point.Y))
             {
                 var dz = (line12.x - line02.x) != 0 ? (line12.z - line02.z) / (line12.x - line02.x) : 0;
-                var dNormal = (line12.normal - line02.normal) != Vector3.Zero ? (line12.normal - line02.normal) / (line12.x - line02.x) : Vector3.Zero;
-                var dCamera = (line12.camera - line02.camera) != Vector3.Zero ? (line12.camera - line02.camera) / (line12.x - line02.x) : Vector3.Zero;
+                var dNormal = (line12.x - line02.x) != 0 ? (line12.normal - line02.normal) / (line12.x - line02.x) : Vector3.Zero;
+                var dCamera = (line12.x - line02.x) != 0 ? (line12.camera - line02.camera) / (line12.x - line02.x) : Vector3.Zero;
                 int startX = (int)(dx < 0 ? Math.Floor(line12.x) : Math.Ceiling(line12.x));
                 int endX = (int)(dx < 0 ? Math.Ceiling(line02.x) : Math.Floor(line02.x));
                 for (int x = startX; dx * x <= dx * endX; x += dx)

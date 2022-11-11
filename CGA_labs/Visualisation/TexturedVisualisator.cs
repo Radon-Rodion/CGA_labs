@@ -3,10 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace CGA_labs.Visualisation
 {
@@ -44,20 +41,21 @@ namespace CGA_labs.Visualisation
 
         private (float r, float g, float b) GetAmbientLighting(Vector3 color)
         {
-            return (color.X* 0.05f, color.Y* 0.05f, color.Z* 0.05f);
+            return (color.X * 0.05f, color.Y * 0.05f, color.Z * 0.05f);
         }
 
         private (float r, float g, float b) GetDiffuseLighting(Vector3 normal, Vector3 color)
         {
             var k = Vector3.Dot(normal, _lightVector);
             k = k > 0 ? k : 0;
-            return ((color.X * k * 0.95f), (color.Y * k *0.95f), (color.Z * k * 0.95f ));
+            return (color.X * k * 0.95f, color.Y * k * 0.95f, color.Z * k * 0.95f);
         }
 
         private (double r, double g, double b) GetSpecularLighting(Vector3 normal, Vector3 cameraVector, float blick)
         {
             var vectorR = _lightVector - 2 * Vector3.Dot(_lightVector, normal) * normal;
-            var k = Vector3.Dot(-vectorR, cameraVector) > 0 ? Math.Pow(Vector3.Dot(-vectorR, cameraVector), blick) : 0;
+            var production = Vector3.Dot(-vectorR, cameraVector);
+            var k = production > 0 ? Math.Pow(production, blick) : 0;
             return (20 * k, 20 * k, 20 * k);
         }
 
@@ -150,8 +148,8 @@ namespace CGA_labs.Visualisation
             var line02 = new LineParams(pNCsArr[0], pNCsArr[2]);
             var line12 = new LineParams(pNCsArr[1], pNCsArr[2]);
 
-            var k2 = line02.dy0 != 0 ? ((float)line02.dx0) / line02.dy0 : line02.dx0;
-            var k1 = line01.dy0 != 0 ? ((float)line01.dx0) / line01.dy0 : line01.dx0;
+            var k2 = line02.dy0 != 0 ? line02.dx0 / line02.dy0 : line02.dx0;
+            var k1 = line01.dy0 != 0 ? line01.dx0 / line01.dy0 : line01.dx0;
             var dx = k2 > k1 ? 1 : -1;
 
             while (line01.y <= Math.Floor(pNCsArr[1].Point.Y))
@@ -162,7 +160,7 @@ namespace CGA_labs.Visualisation
                 var dCamera = (line01.camera - line02.camera) != Vector3.Zero ? (line01.camera - line02.camera) / (line01.x - line02.x) : Vector3.Zero;
                 int startX = (int)(dx < 0 ? Math.Floor(line01.x) : Math.Ceiling(line01.x));
                 int endX = (int)(dx < 0 ? Math.Ceiling(line02.x) : Math.Floor(line02.x));
-                for (int x = (int)line01.x; dx * x <= dx * line02.x; x += dx)
+                for (int x = startX; dx * x <= dx * endX; x += dx)
                 {
                     var z = line01.z + (x - line01.x) * dz;
                     var texelByZ = line01.texelByZ + (x - line01.x) * dTexelByZ;

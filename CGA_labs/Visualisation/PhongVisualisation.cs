@@ -3,11 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using System.Reflection.Metadata.Ecma335;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
-using System.Windows.Media.Media3D;
 
 namespace CGA_labs.Visualisation
 {
@@ -146,8 +142,8 @@ namespace CGA_labs.Visualisation
             var line02 = new LineParams(pNCsArr[0], pNCsArr[2]);
             var line12 = new LineParams(pNCsArr[1], pNCsArr[2]);
 
-            var k2 = line02.dy0 != 0 ? ((float)line02.dx0) / line02.dy0 : line02.dx0;
-            var k1 = line01.dy0 != 0 ? ((float)line01.dx0) / line01.dy0 : line01.dx0;
+            var k2 = line02.dy0 != 0 ? line02.dx0 / line02.dy0 : line02.dx0;
+            var k1 = line01.dy0 != 0 ? line01.dx0 / line01.dy0 : line01.dx0;
             var dx = k2 > k1 ? 1 : -1;
 
             while(line01.y <= Math.Floor(pNCsArr[1].Point.Y))
@@ -157,7 +153,7 @@ namespace CGA_labs.Visualisation
                 var dCamera = (line01.x - line02.x) != 0 ? (line01.camera - line02.camera) / (line01.x - line02.x) : Vector3.Zero;
                 int startX = (int)(dx < 0 ? Math.Floor(line01.x) : Math.Ceiling(line01.x));
                 int endX = (int)(dx < 0 ? Math.Ceiling(line02.x) : Math.Floor(line02.x));
-                for (int x = (int)line01.x; dx * x <= dx * line02.x; x += dx)
+                for (int x = startX; dx * x <= dx * endX; x += dx)
                 {
                     var z = line01.z+(x-line01.x)*dz;
                     var normal = line01.normal + (x - line01.x) * dNormal;

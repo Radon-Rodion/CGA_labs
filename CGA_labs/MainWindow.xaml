@@ -22,8 +22,8 @@
             </Grid>
             <Grid Grid.Column="1">
                 <Label Content="Модель: " />
-                <RadioButton x:Name="MoveModelRadio" GroupName="KeydownAction" Content="Перемещение" IsChecked="True" Margin="30,20,0,0" Checked="MoveModelRadio_Checked" />
-                <RadioButton x:Name="RotateModelRadio" GroupName="KeydownAction" Content="Вращение" Margin="30,36,0,0" Checked="RotateModelRadio_Checked" />
+                <RadioButton x:Name="MoveModelRadio" GroupName="KeydownAction" Content="Перемещение" Margin="30,20,0,0" Checked="MoveModelRadio_Checked" />
+                <RadioButton x:Name="RotateModelRadio" GroupName="KeydownAction" Content="Вращение" IsChecked="True" Margin="30,36,0,0" Checked="RotateModelRadio_Checked" />
             </Grid>
             <Grid Grid.Column="2">
                 <Label Content="Камера: " />

@@ -12,6 +12,12 @@ namespace CGA_labs.Logic
     {
         public static Matrix4x4 ModelWorldMatrix { get; set; }
 
+        public static Vector3 TransformVectorFromModelToWorld(Vector3 vector, ModelParams modelParams)
+        {
+            Matrix4x4 toWorldMatrix = GetTransformMatrix(modelParams);
+            return Vector3.Normalize(Vector3.Transform(vector, toWorldMatrix));
+        }
+
         public static Model TransformFromModelToWorld(Model model, ModelParams modelParams)
         {
             Matrix4x4 toWorldMatrix = GetTransformMatrix(modelParams);

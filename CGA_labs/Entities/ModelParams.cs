@@ -32,7 +32,7 @@ namespace CGA_labs.Entities
         public int Width { get; set; }
         public int Height { get; set; }
 
-        public ModelParams(double width, double height)
+        public ModelParams(double width, double height, float startCameraZ)
         {
             Scaling = 1;
             ModelYaw = 0;
@@ -43,7 +43,7 @@ namespace CGA_labs.Entities
             TranslationZ = 0;
             CameraPositionX = 0;
             CameraPositionY = 0;
-            CameraPositionZ = 3;
+            CameraPositionZ = startCameraZ;
             CameraYaw = 0;
             CameraPitch = 0;
             CameraRoll = 0;

@@ -1,4 +1,5 @@
 ﻿using CGA_labs.Entities;
+using CGA_labs.Logic;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,8 +13,10 @@ namespace CGA_labs.Visualisation
         private Vector3 _lightVector;
         private Func<List<Vector3>, int, Vector3> _cameraVector;
         private float[,] _zBuffer;
+        private ModelParams _modelParams;
         public override void DrawModel(WriteableBitmap bitmap, Model model, ModelParams parameters, Model worldModel)
         {
+            _modelParams = parameters;
             var cameraGlobalVector = new Vector3(parameters.CameraPositionX, parameters.CameraPositionY, parameters.CameraPositionZ);
             _cameraVector = (face, index) =>
             {
@@ -41,14 +44,16 @@ namespace CGA_labs.Visualisation
 
         private (float r, float g, float b) GetAmbientLighting(Vector3 color)
         {
-            return (color.X * 0.05f, color.Y * 0.05f, color.Z * 0.05f);
+            float k = 0.05f;
+            return (color.X * k, color.Y * k, color.Z * k);
         }
 
         private (float r, float g, float b) GetDiffuseLighting(Vector3 normal, Vector3 color)
         {
             var k = Vector3.Dot(normal, _lightVector);
             k = k > 0 ? k : 0;
-            return (color.X * k * 0.95f, color.Y * k * 0.95f, color.Z * k * 0.95f);
+            k *= 0.95f;
+            return (color.X * k, color.Y * k, color.Z * k);
         }
 
         private (double r, double g, double b) GetSpecularLighting(Vector3 normal, Vector3 cameraVector, float blick)
@@ -56,7 +61,8 @@ namespace CGA_labs.Visualisation
             var vectorR = _lightVector - 2 * Vector3.Dot(_lightVector, normal) * normal;
             var production = Vector3.Dot(-vectorR, cameraVector);
             var k = production > 0 ? Math.Pow(production, blick) : 0;
-            return (20 * k, 20 * k, 20 * k);
+            k *= 20;
+            return (k, k, k);
         }
 
         private byte[] GetColorFromNormaleLightAndCamera(Vector3 color,Vector3 normal, Vector3 reflection, Vector3 cameraVector)
@@ -156,8 +162,8 @@ namespace CGA_labs.Visualisation
             {
                 var dz = (line01.x - line02.x) != 0 ? (line01.z - line02.z) / (line01.x - line02.x) : 0;
                 var dTexelByZ = (line01.x - line02.x) != 0 ? (line01.texelByZ - line02.texelByZ) / (line01.x - line02.x) : Vector3.Zero;
-                var dOneByZ = (line01.x - line02.x) != 0 ? (line01.dOneByZ - line02.dOneByZ) / (line01.x - line02.x) : 1;
-                var dCamera = (line01.camera - line02.camera) != Vector3.Zero ? (line01.camera - line02.camera) / (line01.x - line02.x) : Vector3.Zero;
+                var dOneByZ = (line01.x - line02.x) != 0 ? (line01.dOneByZ - line02.dOneByZ) / (line01.x - line02.x) : 0;
+                var dCamera = (line01.x - line02.x) != 0 ? (line01.camera - line02.camera) / (line01.x - line02.x) : Vector3.Zero;
                 int startX = (int)(dx < 0 ? Math.Floor(line01.x) : Math.Ceiling(line01.x));
                 int endX = (int)(dx < 0 ? Math.Ceiling(line02.x) : Math.Floor(line02.x));
                 for (int x = startX; dx * x <= dx * endX; x += dx)
@@ -183,9 +189,9 @@ namespace CGA_labs.Visualisation
             while (line12.y <= Math.Floor(pNCsArr[2].Point.Y))
             {
                 var dz = (line12.x - line02.x) != 0 ? (line12.z - line02.z) / (line12.x - line02.x) : 0;
-                var dTexelByZ = (line12.x - line02.x) != 0 ? (line12.dTexelByZ - line02.dTexelByZ) / (line12.x - line02.x) : Vector3.Zero;
+                var dTexelByZ = (line12.x - line02.x) != 0 ? (line12.texelByZ - line02.texelByZ) / (line12.x - line02.x) : Vector3.Zero;
                 var dOneByZ = (line12.x - line02.x) != 0 ? (line12.dOneByZ - line02.dOneByZ) / (line12.x - line02.x) : 0;
-                var dCamera = (line12.camera - line02.camera) != Vector3.Zero ? (line12.camera - line02.camera) / (line12.x - line02.x) : Vector3.Zero;
+                var dCamera = (line12.x - line02.x) != 0 ? (line12.camera - line02.camera) / (line12.x - line02.x) : Vector3.Zero;
                 int startX = (int)(dx < 0 ? Math.Floor(line12.x) : Math.Ceiling(line12.x));
                 int endX = (int)(dx < 0 ? Math.Ceiling(line02.x) : Math.Floor(line02.x));
                 for (int x = startX; dx * x <= dx * endX; x += dx)
@@ -194,6 +200,7 @@ namespace CGA_labs.Visualisation
                     var texelByZ = line12.texelByZ + (x - line12.x) * dTexelByZ;
                     var oneByZ = line12.oneByZ + (x - line12.x) * dOneByZ;
                     var camera = line12.camera + (x - line12.x) * dCamera;
+                    
                     if (x >= 0 && x < bitmap.Width && (int)line12.y >= 0 && (int)line12.y < bitmap.Height &&
                         z < _zBuffer[x, (int)line12.y])
                     {
@@ -213,7 +220,7 @@ namespace CGA_labs.Visualisation
         {
             int x = (int)(Math.Min(Math.Max(texel.X * model.TexturesMap[0].Length, 0), model.TexturesMap[0].Length - 1));
             int y = (int)(Math.Min(Math.Max(model.TexturesMap.Length - texel.Y * model.TexturesMap.Length, 0), model.TexturesMap.Length - 1));
-            return (model.TexturesMap[y][x], model.NormalsMap[y][x], model.ReflectionsMap[y][x]);
+            return (model.TexturesMap[y][x], TransformationLogic.TransformVectorFromModelToWorld(model.NormalsMap[y][x], _modelParams), model.ReflectionsMap[y][x]);
         }
     }
 }

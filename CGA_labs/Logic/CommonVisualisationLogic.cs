@@ -6,7 +6,7 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Media.Imaging;
+using CGA_labs.Entities;
 
 namespace CGA_labs.Logic
 {
@@ -20,6 +20,12 @@ namespace CGA_labs.Logic
             MessageBoxImage icon = MessageBoxImage.Error;
 
             MessageBox.Show(messageBoxText, caption, button, icon, MessageBoxResult.Yes);
+        }
+
+        public static float FindStartCameraZ(Model model)
+        {
+            float maxModelZ = model.Points.MaxBy(p => p.Z).Z;
+            return maxModelZ * 3;
         }
     }
 }

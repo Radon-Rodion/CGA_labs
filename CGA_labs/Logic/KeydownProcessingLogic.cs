@@ -76,22 +76,22 @@ namespace CGA_labs.Logic
             switch (e.Key)
             {
                 case Key.Up:
-                    modelParams.CameraPositionZ += 1;
-                    break;
-                case Key.Down:
                     modelParams.CameraPositionZ -= 1;
                     break;
-                case Key.Left:
-                    modelParams.CameraPositionX -= 1;
+                case Key.Down:
+                    modelParams.CameraPositionZ += 1;
                     break;
-                case Key.Right:
+                case Key.Left:
                     modelParams.CameraPositionX += 1;
                     break;
+                case Key.Right:
+                    modelParams.CameraPositionX -= 1;
+                    break;
                 case Key.PageUp:
-                    modelParams.CameraPositionY += 1;
+                    modelParams.CameraPositionY -= 1;
                     break;
                 case Key.PageDown:
-                    modelParams.CameraPositionY -= 1;
+                    modelParams.CameraPositionY += 1;
                     break;
             }
         }

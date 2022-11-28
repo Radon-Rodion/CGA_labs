@@ -82,7 +82,7 @@ namespace CGA_labs.Visualisation
         private struct PointTexelCam
         {
             public Vector3 Texel;
-            public Vector3 Point;
+            public Vector4 Point;
             public Vector3 Camera;
         }
 
@@ -93,8 +93,7 @@ namespace CGA_labs.Visualisation
             {
                 var pNC = new PointTexelCam();
                 pNC.Texel = model.Texels[(int)triangle[i].Y];
-                var point = model.Points[(int)triangle[i].X];
-                pNC.Point = new Vector3(point.X, point.Y, point.Z);
+                pNC.Point = model.Points[(int)triangle[i].X];
                 pNC.Camera = _cameraVector(triangle, i);
                 result.Add(pNC);
             }
@@ -112,11 +111,11 @@ namespace CGA_labs.Visualisation
             public float y;
             public Vector3 dTexelByZ;
             public float dOneByZ;
-            public Vector3 dCamera;
+            public Vector3 dCameraByZ;
 
             public Vector3 texelByZ;
             public float oneByZ;
-            public Vector3 camera;
+            public Vector3 cameraByZ;
 
             public LineParams(PointTexelCam from, PointTexelCam to)
             {
@@ -126,19 +125,19 @@ namespace CGA_labs.Visualisation
                 y = from.Point.Y;
                 dy0 = to.Point.Y - from.Point.Y;
                 dx0 = to.Point.X - from.Point.X;
-                dTexelByZ = (to.Texel/to.Point.Z - from.Texel/from.Point.Z) / (to.Point.Y - from.Point.Y);
-                dOneByZ = (1/to.Point.Z - 1/from.Point.Z) / (to.Point.Y - from.Point.Y);
-                dCamera = (to.Camera - from.Camera) / (to.Point.Y - from.Point.Y);
-                texelByZ = from.Texel/from.Point.Z;
-                oneByZ = 1/from.Point.Z;
-                camera = from.Camera;
+                dTexelByZ = (to.Texel/to.Point.W - from.Texel/from.Point.W) / (to.Point.Y - from.Point.Y);
+                dOneByZ = (1/to.Point.W - 1/from.Point.W) / (to.Point.Y - from.Point.Y);
+                dCameraByZ = (to.Camera/to.Point.W - from.Camera/from.Point.W) / (to.Point.Y - from.Point.Y);
+                texelByZ = from.Texel/from.Point.W;
+                oneByZ = 1/from.Point.W;
+                cameraByZ = from.Camera/from.Point.W;
             }
 
             public void IncrementY()
             {
                 texelByZ += dTexelByZ;
                 oneByZ += dOneByZ;
-                camera += dCamera;
+                cameraByZ += dCameraByZ;
                 z += dz;
                 x += dx0 / dy0;
                 y++;
@@ -162,8 +161,8 @@ namespace CGA_labs.Visualisation
             {
                 var dz = (line01.x - line02.x) != 0 ? (line01.z - line02.z) / (line01.x - line02.x) : 0;
                 var dTexelByZ = (line01.x - line02.x) != 0 ? (line01.texelByZ - line02.texelByZ) / (line01.x - line02.x) : Vector3.Zero;
-                var dOneByZ = (line01.x - line02.x) != 0 ? (line01.dOneByZ - line02.dOneByZ) / (line01.x - line02.x) : 0;
-                var dCamera = (line01.x - line02.x) != 0 ? (line01.camera - line02.camera) / (line01.x - line02.x) : Vector3.Zero;
+                var dOneByZ = (line01.x - line02.x) != 0 ? (line01.oneByZ - line02.oneByZ) / (line01.x - line02.x) : 0;
+                var dCameraByZ = (line01.x - line02.x) != 0 ? (line01.cameraByZ - line02.cameraByZ) / (line01.x - line02.x) : Vector3.Zero;
                 int startX = (int)(dx < 0 ? Math.Floor(line01.x) : Math.Ceiling(line01.x));
                 int endX = (int)(dx < 0 ? Math.Ceiling(line02.x) : Math.Floor(line02.x));
                 for (int x = startX; dx * x <= dx * endX; x += dx)
@@ -171,14 +170,14 @@ namespace CGA_labs.Visualisation
                     var z = line01.z + (x - line01.x) * dz;
                     var texelByZ = line01.texelByZ + (x - line01.x) * dTexelByZ;
                     var oneByZ = line01.oneByZ + (x - line01.x) * dOneByZ;
-                    var camera = line01.camera + (x - line01.x) * dCamera;
+                    var cameraByZ = line01.cameraByZ + (x - line01.x) * dCameraByZ;
 
                     if (x >= 0 && x < bitmap.Width && (int)line01.y >= 0 && (int)line01.y < bitmap.Height &&
                         z < _zBuffer[x, (int)line01.y])
                     {
                         _zBuffer[x, (int)line01.y] = z;
                         var (color, normal, reflection) = GetByTexel(model, texelByZ/oneByZ);
-                        GetPixelColor = () => GetColorFromNormaleLightAndCamera(color, normal, reflection, camera);
+                        GetPixelColor = () => GetColorFromNormaleLightAndCamera(color, normal, reflection, cameraByZ/oneByZ);
                         DrawPixel(bitmap, new Pixel(x, (int)line01.y, z));
                     }
                 }
@@ -190,8 +189,8 @@ namespace CGA_labs.Visualisation
             {
                 var dz = (line12.x - line02.x) != 0 ? (line12.z - line02.z) / (line12.x - line02.x) : 0;
                 var dTexelByZ = (line12.x - line02.x) != 0 ? (line12.texelByZ - line02.texelByZ) / (line12.x - line02.x) : Vector3.Zero;
-                var dOneByZ = (line12.x - line02.x) != 0 ? (line12.dOneByZ - line02.dOneByZ) / (line12.x - line02.x) : 0;
-                var dCamera = (line12.x - line02.x) != 0 ? (line12.camera - line02.camera) / (line12.x - line02.x) : Vector3.Zero;
+                var dOneByZ = (line12.x - line02.x) != 0 ? (line12.oneByZ - line02.oneByZ) / (line12.x - line02.x) : 0;
+                var dCameraByZ = (line12.x - line02.x) != 0 ? (line12.cameraByZ - line02.cameraByZ) / (line12.x - line02.x) : Vector3.Zero;
                 int startX = (int)(dx < 0 ? Math.Floor(line12.x) : Math.Ceiling(line12.x));
                 int endX = (int)(dx < 0 ? Math.Ceiling(line02.x) : Math.Floor(line02.x));
                 for (int x = startX; dx * x <= dx * endX; x += dx)
@@ -199,14 +198,14 @@ namespace CGA_labs.Visualisation
                     var z = line12.z + (x - line12.x) * dz;
                     var texelByZ = line12.texelByZ + (x - line12.x) * dTexelByZ;
                     var oneByZ = line12.oneByZ + (x - line12.x) * dOneByZ;
-                    var camera = line12.camera + (x - line12.x) * dCamera;
+                    var cameraByZ = line12.cameraByZ + (x - line12.x) * dCameraByZ;
                     
                     if (x >= 0 && x < bitmap.Width && (int)line12.y >= 0 && (int)line12.y < bitmap.Height &&
                         z < _zBuffer[x, (int)line12.y])
                     {
                         _zBuffer[x, (int)line12.y] = z;
                         var (color, normal, reflection) = GetByTexel(model, texelByZ / oneByZ);
-                        GetPixelColor = () => GetColorFromNormaleLightAndCamera(color, normal, reflection, camera);
+                        GetPixelColor = () => GetColorFromNormaleLightAndCamera(color, normal, reflection, cameraByZ/oneByZ);
                         DrawPixel(bitmap, new Pixel(x, (int)line12.y, z));
                     }
                 }

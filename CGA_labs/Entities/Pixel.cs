@@ -13,12 +13,14 @@ namespace CGA_labs.Entities
         public int X { get; set; }
         public int Y { get; set; }
         public float Z { get; set; }
+        public float W { get; set; }
 
-        public Pixel(int x, int y, float z)
+        public Pixel(int x, int y, float z, float w = 0)
         {
             X = x;
             Y = y;
             Z = z;
+            W = w;
         }
     }
 }

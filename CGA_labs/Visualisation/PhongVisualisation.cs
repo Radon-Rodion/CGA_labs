@@ -54,8 +54,8 @@ namespace CGA_labs.Visualisation
         private (int r, int g, int b) GetSpecularLighting(Vector3 normalInPoint, Vector3 cameraVector)
         {
             var vectorR = _lightVector - 2 * Vector3.Dot(_lightVector, normalInPoint) * normalInPoint;
-            var k = Vector3.Dot(-vectorR, cameraVector)>0 ? Math.Pow(Vector3.Dot(-vectorR, cameraVector), 0.5) : 0;
-            return ((int)(150 * k), (int)(130 * k), (int)(150 * k));
+            var k = Vector3.Dot(-vectorR, cameraVector)>0 ? Math.Pow(Vector3.Dot(-vectorR, cameraVector), 1) : 0;
+            return ((int)(50 * k), (int)(30 * k), (int)(50 * k));
         }
 
         private byte[] GetColorFromNormaleLightAndCamera(Vector3 normalInPoint, Vector3 cameraVector)

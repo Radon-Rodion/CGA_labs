@@ -66,7 +66,11 @@ namespace CGA_labs.Logic
                 var texturesMap = FileToPixelsMap(fileAddress.Replace(".obj", "_tex.png"), 0, 255);
                 var normalsMap = FileToPixelsMap(fileAddress.Replace(".obj", "_nor.png"), -1, 1);
                 var reflectionsMap = FileToPixelsMap(fileAddress.Replace(".obj", "_ref.png"), 0, 1);
-                return new Model(points, faces, normals, texels, reflectionsMap, normalsMap, texturesMap);
+
+                texturesMap ??= FileToPixelsMap(Path.Combine(Path.GetDirectoryName(fileAddress), "BaseColor Map.png"), 0, 255);
+                normalsMap ??= FileToPixelsMap(Path.Combine(Path.GetDirectoryName(fileAddress), "Normal Map.png"), -1, 1);
+                var mraoMap = FileToPixelsMap(Path.Combine(Path.GetDirectoryName(fileAddress), "MRAO Map.png"), 0, 1);
+                return new Model(points, faces, normals, texels, reflectionsMap, normalsMap, texturesMap, mraoMap);
             }
             catch (ApplicationException ex)
             {

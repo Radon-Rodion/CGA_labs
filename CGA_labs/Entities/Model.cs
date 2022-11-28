@@ -18,7 +18,11 @@ namespace CGA_labs.Entities
         public Vector3[][] TexturesMap { get; set; }
         public Vector3[][] ReflectionsMap { get; set; }
 
-        public Model(List<Vector4> points, List<List<Vector3>> faces, List<Vector3> normals, List<Vector3> texels, Vector3[][] reflectionsMap, Vector3[][] normalsMap, Vector3[][] texturesMap)
+        public float[][] MetalicMap { get; set; }
+        public float[][] RoughnessMap { get; set; }
+        public float[][] aoMap { get; set; }
+
+        public Model(List<Vector4> points, List<List<Vector3>> faces, List<Vector3> normals, List<Vector3> texels, Vector3[][] reflectionsMap, Vector3[][] normalsMap, Vector3[][] texturesMap, Vector3[][] mraoMap)
         {
             Points = points;
             Faces = SplitFacesOnTriangles(faces);
@@ -27,6 +31,10 @@ namespace CGA_labs.Entities
             ReflectionsMap = reflectionsMap;
             TexturesMap = texturesMap;
             NormalsMap = normalsMap;
+
+            MetalicMap = mraoMap.Select(maps => maps.Select(map => map.X).ToArray()).ToArray();
+            RoughnessMap = mraoMap.Select(maps => maps.Select(map => map.Y).ToArray()).ToArray();
+            aoMap = mraoMap.Select(maps => maps.Select(map => map.Z).ToArray()).ToArray();
         }
 
         private static List<List<Vector3>> SplitFacesOnTriangles(List<List<Vector3>> faces)
@@ -89,8 +97,9 @@ namespace CGA_labs.Entities
             var newTextureMap = TexturesMap?.Select(tmList => tmList.Select(tm => new Vector3(tm.X, tm.Y, tm.Z)).ToArray())?.ToArray();
             var newNormalsMap = NormalsMap?.Select(nmList => nmList.Select(nm => new Vector3(nm.X, nm.Y, nm.Z)).ToArray())?.ToArray();
             var newReflectionsMap = ReflectionsMap?.Select(rmList => rmList.Select(rm => new Vector3(rm.X, rm.Y, rm.Z)).ToArray())?.ToArray();
+            var mraoMap = MetalicMap.Zip(RoughnessMap, aoMap).Select(maps => maps.First.Zip(maps.Second, maps.Third).Select(map => new Vector3(map.First, map.Second, map.Third)).ToArray()).ToArray();
 
-            return new Model(newPoints, newFaces, newNormals, newTexels, newReflectionsMap, newNormalsMap, newTextureMap);
+            return new Model(newPoints, newFaces, newNormals, newTexels, newReflectionsMap, newNormalsMap, newTextureMap, mraoMap);
         }
     }
 }

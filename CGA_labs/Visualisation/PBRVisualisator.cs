@@ -1,4 +1,5 @@
 ﻿using CGA_labs.Entities;
+using CGA_labs.Logic;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,38 +7,39 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
+using static CGA_labs.Logic.PBRLogic;
 
 namespace CGA_labs.Visualisation
 {
+
     public class PBRVisualisator : AbstractVisualisator
     {
-        private Func<List<Vector3>, int, Vector3> _cameraVector;
+        private Vector3[] _lightPositions;
+        private Vector3[] _lightColors;
+        private Vector3 _cameraVector;
         private float[,] _zBuffer;
-        private Vector3[] lightPositions => null;
-        
+        private ModelParams _modelParams;
         public override void DrawModel(WriteableBitmap bitmap, Model model, ModelParams parameters, Model worldModel)
         {
-            var lightsRingRadius = getModelRadius(worldModel, parameters) * 2;
-            var modelPosition = new Vector3(parameters.TranslationX, parameters.TranslationY, parameters.TranslationZ);
+                var lightsRingRadius = getModelRadius(worldModel, parameters) * 2;
+                var modelPosition = new Vector3(parameters.TranslationX, parameters.TranslationY, parameters.TranslationZ);
 
-            var lights = new Vector3[] { 
-                new Vector3(lightsRingRadius, 0, 0) + modelPosition, 
-                new Vector3(-lightsRingRadius, 0, 0) + modelPosition, 
-                new Vector3(0, lightsRingRadius, 0) + modelPosition, 
+                _lightPositions = new Vector3[] {
+                new Vector3(lightsRingRadius, 0, 0) + modelPosition,
+                new Vector3(-lightsRingRadius, 0, 0) + modelPosition,
+                new Vector3(0, lightsRingRadius, 0) + modelPosition,
                 new Vector3(0, -lightsRingRadius, 0) + modelPosition
             };
+                _lightColors = new Vector3[]
+                {
+                new Vector3(255, 255, 0),
+                new Vector3(0, 255, 0),
+                new Vector3(0, 0, 255),
+                new Vector3(255, 255, 255)
+                };
 
-
-
-            var cameraGlobalVector = new Vector3(parameters.CameraPositionX, parameters.CameraPositionY, parameters.CameraPositionZ);
-            _cameraVector = (face, index) =>
-            {
-                int indexPoint = (int)face[index].X;
-                Vector4 point = worldModel.Points[indexPoint]; //TODO: tink about blicks
-                var facePoint = new Vector3(point.X, point.Y, point.Z);
-
-                return Vector3.Normalize(cameraGlobalVector - facePoint);
-            };
+                _modelParams = parameters;
+            _cameraVector = new Vector3(parameters.CameraPositionX, parameters.CameraPositionY, parameters.CameraPositionZ);
 
             _zBuffer = new float[(int)bitmap.Width, (int)bitmap.Height];
             for (int i = 0; i < _zBuffer.GetLength(0); i++)
@@ -53,56 +55,73 @@ namespace CGA_labs.Visualisation
             }
         }
 
-        private (int r, int g, int b) GetAmbientLighting()
+            private byte[] GetColorInPoint(Vector3 albedo, Vector3 normal, Vector3 point, float metallic, float roughness, float ao)
+            {
+                Vector3 N = Vector3.Normalize(normal);
+                Vector3 V = Vector3.Normalize(_cameraVector - point);
+                float baseReflectivity = 0.04f;
+                Vector3 C = Vector3.Normalize(_cameraVector - albedo);
+                Vector3 F0 = new Vector3(baseReflectivity, baseReflectivity, baseReflectivity);
+                F0 = F0 + albedo * metallic * (1 - baseReflectivity);
+
+                // reflectance equation
+                Vector3 Lo = Vector3.Zero;
+                for (int i = 0; i < 4; ++i)
+                {
+                    // calculate per-light radiance
+                    Vector3 L = Vector3.Normalize(_lightPositions[i] - point);
+                    Vector3 H = Vector3.Normalize(V + L);
+                    float distance = (_lightPositions[i] - point).Length();
+                    float attenuation = 1.0f / (distance * distance);
+                    Vector3 radiance = _lightColors[i] * attenuation;
+
+                    // cook-torrance brdf
+                    float NDF = DistributionGGX(N, H, roughness);
+                    float G = GeometrySmith(N, V, L, roughness);
+                    Vector3 F = FresnelSchlick(Math.Max(Vector3.Dot(H, V), 0.0f), F0);
+
+                    Vector3 kS = F;
+                    Vector3 kD = new Vector3(1.0f, 1.0f, 1.0f) - kS;
+                    kD *= 1.0f - metallic;
+
+                    Vector3 numerator = NDF * G * F;
+                    float denominator = 4.0f * (float)Math.Max(Vector3.Dot(N, V), 0.0) * (float)Math.Max(Vector3.Dot(N, L), 0.0) + 0.0001f;
+                    Vector3 specular = numerator / denominator;
+
+                    // add to outgoing radiance Lo
+                    float NdotL = (float)Math.Max(Vector3.Dot(N, L), 0.0);
+                    Lo += (kD * albedo / (float)Math.PI + specular) * radiance * NdotL;
+                }
+
+                Vector3 ambient = 0.03f * albedo * ao;
+                Vector3 color = ambient + Lo;
+
+                color = color / (color + new Vector3(1, 1, 1));
+                double power = 1.0 / 2.2;
+                color = new Vector3((float)Math.Pow(color.X, power), (float)Math.Pow(color.Y, power), (float)Math.Pow(color.Z, power));
+
+                byte blue = (byte)(Math.Min(Math.Max(color.X, 0), 255));
+                byte green = (byte)(Math.Min(Math.Max(color.Y, 0), 255));
+                byte red = (byte)(Math.Min(Math.Max(color.Z, 0), 255));
+                byte alpha = 255;
+                byte[] colorData = { blue, green, red, alpha };
+                return colorData;
+            }
+
+            private struct PointTexel
         {
-            return (15, 50, 15);
+            public Vector3 Texel;
+            public Vector4 Point;
         }
 
-        private (int r, int g, int b) GetDiffuseLighting(Vector3 normalInPoint)
+        private List<PointTexel> GetNormalsPointsAndCameraVectors(Model model, List<Vector3> triangle)
         {
-            var k = Vector3.Dot(normalInPoint, _lightVector);
-            k = k > 0 ? k : 0;
-            return ((int)(50 * k), (int)(150 * k), (int)(50 * k));
-        }
-
-        private (int r, int g, int b) GetSpecularLighting(Vector3 normalInPoint, Vector3 cameraVector)
-        {
-            var vectorR = _lightVector - 2 * Vector3.Dot(_lightVector, normalInPoint) * normalInPoint;
-            var k = Vector3.Dot(-vectorR, cameraVector) > 0 ? Math.Pow(Vector3.Dot(-vectorR, cameraVector), 1) : 0;
-            return ((int)(50 * k), (int)(30 * k), (int)(50 * k));
-        }
-
-        private byte[] GetColorFromNormaleLightAndCamera(Vector3 normalInPoint, Vector3 cameraVector)
-        {
-            var ambient = GetAmbientLighting();
-            var diffuse = GetDiffuseLighting(normalInPoint);
-            var specular = GetSpecularLighting(normalInPoint, cameraVector);
-
-            byte blue = (byte)(Math.Min(Math.Max(ambient.b + diffuse.b + specular.b, 0), 255));
-            byte green = (byte)(Math.Min(Math.Max(ambient.g + diffuse.g + specular.g, 0), 255));
-            byte red = (byte)(Math.Min(Math.Max(ambient.r + diffuse.r + specular.r, 0), 255));
-            byte alpha = 255;
-            byte[] colorData = { blue, green, red, alpha };
-            return colorData;
-        }
-
-        private struct PointNormalCam
-        {
-            public Vector3 Normal;
-            public Vector3 Point;
-            public Vector3 Camera;
-        }
-
-        private List<PointNormalCam> GetNormalsPointsAndCameraVectors(Model model, List<Vector3> triangle)
-        {
-            var result = new List<PointNormalCam>();
+            var result = new List<PointTexel>();
             for (int i = 0; i < triangle.Count; i++)
             {
-                var pNC = new PointNormalCam();
-                pNC.Normal = model.Normals[(int)triangle[i].Z];
-                var point = model.Points[(int)triangle[i].X];
-                pNC.Point = new Vector3(point.X, point.Y, point.Z);
-                pNC.Camera = _cameraVector(triangle, i);
+                var pNC = new PointTexel();
+                pNC.Texel = model.Texels[(int)triangle[i].Y];
+                pNC.Point = model.Points[(int)triangle[i].X];
                 result.Add(pNC);
             }
 
@@ -117,13 +136,15 @@ namespace CGA_labs.Visualisation
             public float z;
             public float x;
             public float y;
-            public Vector3 dNormal;
-            public Vector3 dCamera;
+            public Vector3 dTexelByZ;
+            public float dOneByZ;
+            public Vector4 dPointByZ;
 
-            public Vector3 normal;
-            public Vector3 camera;
+            public Vector3 texelByZ;
+            public float oneByZ;
+            public Vector4 pointByZ;
 
-            public LineParams(PointNormalCam from, PointNormalCam to)
+            public LineParams(PointTexel from, PointTexel to)
             {
                 dz = (to.Point.Z - from.Point.Z) / (to.Point.Y - from.Point.Y);
                 z = from.Point.Z;
@@ -131,16 +152,19 @@ namespace CGA_labs.Visualisation
                 y = from.Point.Y;
                 dy0 = to.Point.Y - from.Point.Y;
                 dx0 = to.Point.X - from.Point.X;
-                dNormal = (to.Normal - from.Normal) / (to.Point.Y - from.Point.Y);
-                dCamera = (to.Camera - from.Camera) / (to.Point.Y - from.Point.Y);
-                normal = from.Normal;
-                camera = from.Camera;
+                dTexelByZ = (to.Texel / to.Point.W - from.Texel / from.Point.W) / (to.Point.Y - from.Point.Y);
+                dOneByZ = (1 / to.Point.W - 1 / from.Point.W) / (to.Point.Y - from.Point.Y);
+                dPointByZ = (to.Point / to.Point.W - from.Point / from.Point.W) / (to.Point.Y - from.Point.Y);
+                texelByZ = from.Texel / from.Point.W;
+                oneByZ = 1 / from.Point.W;
+                pointByZ = from.Point / from.Point.W;
             }
 
             public void IncrementY()
             {
-                normal += dNormal;
-                camera += dCamera;
+                texelByZ += dTexelByZ;
+                oneByZ += dOneByZ;
+                pointByZ += dPointByZ;
                 z += dz;
                 x += dx0 / dy0;
                 y++;
@@ -163,21 +187,24 @@ namespace CGA_labs.Visualisation
             while (line01.y <= Math.Floor(pNCsArr[1].Point.Y))
             {
                 var dz = (line01.x - line02.x) != 0 ? (line01.z - line02.z) / (line01.x - line02.x) : 0;
-                var dNormal = (line01.x - line02.x) != 0 ? (line01.normal - line02.normal) / (line01.x - line02.x) : Vector3.Zero;
-                var dCamera = (line01.x - line02.x) != 0 ? (line01.camera - line02.camera) / (line01.x - line02.x) : Vector3.Zero;
+                var dTexelByZ = (line01.x - line02.x) != 0 ? (line01.texelByZ - line02.texelByZ) / (line01.x - line02.x) : Vector3.Zero;
+                var dOneByZ = (line01.x - line02.x) != 0 ? (line01.oneByZ - line02.oneByZ) / (line01.x - line02.x) : 0;
+                var dPointByZ = (line01.x - line02.x) != 0 ? (line01.pointByZ - line02.pointByZ) / (line01.x - line02.x) : Vector4.Zero;
                 int startX = (int)(dx < 0 ? Math.Floor(line01.x) : Math.Ceiling(line01.x));
                 int endX = (int)(dx < 0 ? Math.Ceiling(line02.x) : Math.Floor(line02.x));
                 for (int x = startX; dx * x <= dx * endX; x += dx)
                 {
                     var z = line01.z + (x - line01.x) * dz;
-                    var normal = line01.normal + (x - line01.x) * dNormal;
-                    var camera = line01.camera + (x - line01.x) * dCamera;
+                    var texelByZ = line01.texelByZ + (x - line01.x) * dTexelByZ;
+                    var oneByZ = line01.oneByZ + (x - line01.x) * dOneByZ;
+                    var pointByZ = line01.pointByZ + (x - line01.x) * dPointByZ;
 
                     if (x >= 0 && x < bitmap.Width && (int)line01.y >= 0 && (int)line01.y < bitmap.Height &&
-                        z < _zBuffer[x, (int)line01.y] && IsPointVisible(normal, camera))
+                        z < _zBuffer[x, (int)line01.y])
                     {
                         _zBuffer[x, (int)line01.y] = z;
-                        GetPixelColor = () => GetColorFromNormaleLightAndCamera(normal, camera);
+                        var (color, normal, metallic, roughness, ao) = GetByTexel(model, texelByZ / oneByZ);
+                        GetPixelColor = () => GetColorInPoint(color, normal, new Vector3(pointByZ.X, pointByZ.Y, pointByZ.Z) / oneByZ, metallic, roughness, ao);
                         DrawPixel(bitmap, new Pixel(x, (int)line01.y, z));
                     }
                 }
@@ -188,20 +215,24 @@ namespace CGA_labs.Visualisation
             while (line12.y <= Math.Floor(pNCsArr[2].Point.Y))
             {
                 var dz = (line12.x - line02.x) != 0 ? (line12.z - line02.z) / (line12.x - line02.x) : 0;
-                var dNormal = (line12.x - line02.x) != 0 ? (line12.normal - line02.normal) / (line12.x - line02.x) : Vector3.Zero;
-                var dCamera = (line12.x - line02.x) != 0 ? (line12.camera - line02.camera) / (line12.x - line02.x) : Vector3.Zero;
+                var dTexelByZ = (line12.x - line02.x) != 0 ? (line12.texelByZ - line02.texelByZ) / (line12.x - line02.x) : Vector3.Zero;
+                var dOneByZ = (line12.x - line02.x) != 0 ? (line12.oneByZ - line02.oneByZ) / (line12.x - line02.x) : 0;
+                var dPointByZ = (line12.x - line02.x) != 0 ? (line12.pointByZ - line02.pointByZ) / (line12.x - line02.x) : Vector4.Zero;
                 int startX = (int)(dx < 0 ? Math.Floor(line12.x) : Math.Ceiling(line12.x));
                 int endX = (int)(dx < 0 ? Math.Ceiling(line02.x) : Math.Floor(line02.x));
                 for (int x = startX; dx * x <= dx * endX; x += dx)
                 {
                     var z = line12.z + (x - line12.x) * dz;
-                    var normal = line12.normal + (x - line12.x) * dNormal;
-                    var camera = line12.camera + (x - line12.x) * dCamera;
+                    var texelByZ = line12.texelByZ + (x - line12.x) * dTexelByZ;
+                    var oneByZ = line12.oneByZ + (x - line12.x) * dOneByZ;
+                    var pointByZ = line12.pointByZ + (x - line12.x) * dPointByZ;
+
                     if (x >= 0 && x < bitmap.Width && (int)line12.y >= 0 && (int)line12.y < bitmap.Height &&
-                        z < _zBuffer[x, (int)line12.y] && IsPointVisible(normal, camera))
+                        z < _zBuffer[x, (int)line12.y])
                     {
                         _zBuffer[x, (int)line12.y] = z;
-                        GetPixelColor = () => GetColorFromNormaleLightAndCamera(normal, camera);
+                        var (color, normal, metallic, roughness, ao) = GetByTexel(model, texelByZ / oneByZ);
+                        GetPixelColor = () => GetColorInPoint(color, normal, new Vector3(pointByZ.X, pointByZ.Y, pointByZ.Z) / oneByZ, metallic, roughness, ao);
                         DrawPixel(bitmap, new Pixel(x, (int)line12.y, z));
                     }
                 }
@@ -211,22 +242,24 @@ namespace CGA_labs.Visualisation
             }
         }
 
-        private bool IsPointVisible(Vector3 normalInPoint, Vector3 camera)
+        private (Vector3 color, Vector3 normal, float metallic, float roughness, float ao) GetByTexel(Model model, Vector3 texel)
         {
-            return true;//Vector3.Dot(normalInPoint, camera) >= 0f;
+            int x = (int)(Math.Min(Math.Max(texel.X * model.TexturesMap[0].Length, 0), model.TexturesMap[0].Length - 1));
+            int y = (int)(Math.Min(Math.Max(model.TexturesMap.Length - texel.Y * model.TexturesMap.Length, 0), model.TexturesMap.Length - 1));
+            return (model.TexturesMap[y][x], TransformationLogic.TransformVectorFromModelToWorld(model.NormalsMap[y][x], _modelParams), model.MetalicMap[y][x], model.RoughnessMap[y][x], model.aoMap[y][x]);
         }
 
         private float getModelRadius(Model model, ModelParams modelParams)
         {
-            float radius = 0;
-            model.Points.ForEach(p =>
-            {
-                if (Math.Abs(p.X- modelParams.TranslationX) > radius)
-                    radius = Math.Abs(p.X - modelParams.TranslationX);
-                if (Math.Abs(p.Z - modelParams.TranslationZ) > radius)
-                    radius = Math.Abs(p.Z - -modelParams.TranslationZ);
-            });
-            return radius;
+                float radius = 0;
+                model.Points.ForEach(p =>
+                {
+                    if (Math.Abs(p.X - modelParams.TranslationX) > radius)
+                        radius = Math.Abs(p.X - modelParams.TranslationX);
+                    if (Math.Abs(p.Z - modelParams.TranslationZ) > radius)
+                        radius = Math.Abs(p.Z - -modelParams.TranslationZ);
+                });
+                return radius;
         }
     }
 }

@@ -35,7 +35,7 @@ namespace CGA_labs
         {
             InitializeComponent();
             _keydownProcessor = new ModelRotator();
-            _visualisator = new TexturedVisualisator();
+            _visualisator = new PBRVisualisator();
         }
 
         private void Window_KeyDown(object sender, KeyEventArgs e)

@@ -9,12 +9,12 @@ namespace CGA_labs.Logic
 {
     public static class PBRLogic
     {
-        static float FresnelSchlick(float cosTheta, float F0)
+        public static Vector3 FresnelSchlick(float cosTheta, Vector3 F0)
         {
-            return F0 + (1.0f - F0) * (float)Math.Pow(Clamp(1.0f - cosTheta, 0.0f, 1.0f), 5.0f);
+            return F0 + (new Vector3(1.0f, 1.0f, 1.0f) - F0) * (float)Math.Pow(Clamp(1.0f - cosTheta, 0.0f, 1.0f), 5.0f);
         }
 
-        static float DistributionGGX(Vector3 N, Vector3 H, float roughness)
+        public static float DistributionGGX(Vector3 N, Vector3 H, float roughness)
         {
             float a = roughness * roughness;
             float a2 = a * a;
@@ -28,7 +28,7 @@ namespace CGA_labs.Logic
             return num / denom;
         }
 
-        static float GeometrySchlickGGX(float NdotV, float roughness)
+        public static float GeometrySchlickGGX(float NdotV, float roughness)
         {
             float r = (roughness + 1.0f);
             float k = (r * r) / 8.0f;
@@ -38,7 +38,7 @@ namespace CGA_labs.Logic
 
             return num / denom;
         }
-        static float GeometrySmith(Vector3 N, Vector3 V, Vector3 L, float roughness)
+        public static float GeometrySmith(Vector3 N, Vector3 V, Vector3 L, float roughness)
         {
             float NdotV = (float)Math.Max(Vector3.Dot(N, V), 0.0);
             float NdotL = (float)Math.Max(Vector3.Dot(N, L), 0.0);
@@ -48,7 +48,7 @@ namespace CGA_labs.Logic
             return ggx1 * ggx2;
         }
 
-        static float Clamp(float val, float min, float max)
+        public static float Clamp(float val, float min, float max)
         {
             return Math.Min(Math.Max(min, val), max);
         }

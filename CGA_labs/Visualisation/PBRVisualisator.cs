@@ -19,6 +19,7 @@ namespace CGA_labs.Visualisation
         private Vector3 _cameraVector;
         private float[,] _zBuffer;
         private ModelParams _modelParams;
+        private Model _globalModel;
         public override void DrawModel(WriteableBitmap bitmap, Model model, ModelParams parameters, Model worldModel)
         {
                 var lightsRingRadius = getModelRadius(worldModel, parameters) * 2;
@@ -32,13 +33,14 @@ namespace CGA_labs.Visualisation
             };
                 _lightColors = new Vector3[]
                 {
-                new Vector3(255, 255, 0),
-                new Vector3(0, 255, 0),
-                new Vector3(0, 0, 255),
-                new Vector3(255, 255, 255)
+                new Vector3(1, 1, 0),
+                new Vector3(0, 1, 0),
+                new Vector3(0, 0, 1),
+                new Vector3(1, 1, 1)
                 };
 
                 _modelParams = parameters;
+            _globalModel = worldModel;
             _cameraVector = new Vector3(parameters.CameraPositionX, parameters.CameraPositionY, parameters.CameraPositionZ);
 
             _zBuffer = new float[(int)bitmap.Width, (int)bitmap.Height];
@@ -72,7 +74,7 @@ namespace CGA_labs.Visualisation
                     Vector3 L = Vector3.Normalize(_lightPositions[i] - point);
                     Vector3 H = Vector3.Normalize(V + L);
                     float distance = (_lightPositions[i] - point).Length();
-                    float attenuation = 1.0f / (distance * distance);
+                    float attenuation = 1.0f / (distance*distance);
                     Vector3 radiance = _lightColors[i] * attenuation;
 
                     // cook-torrance brdf
@@ -100,9 +102,9 @@ namespace CGA_labs.Visualisation
                 double power = 1.0 / 2.2;
                 color = new Vector3((float)Math.Pow(color.X, power), (float)Math.Pow(color.Y, power), (float)Math.Pow(color.Z, power));
 
-                byte blue = (byte)(Math.Min(Math.Max(color.X, 0), 255));
-                byte green = (byte)(Math.Min(Math.Max(color.Y, 0), 255));
-                byte red = (byte)(Math.Min(Math.Max(color.Z, 0), 255));
+                byte blue = (byte)(Math.Min(Math.Max(color.X*255, 0), 255));
+                byte green = (byte)(Math.Min(Math.Max(color.Y*255, 0), 255));
+                byte red = (byte)(Math.Min(Math.Max(color.Z*255, 0), 255));
                 byte alpha = 255;
                 byte[] colorData = { blue, green, red, alpha };
                 return colorData;
@@ -112,9 +114,10 @@ namespace CGA_labs.Visualisation
         {
             public Vector3 Texel;
             public Vector4 Point;
+            public Vector4 GlobalPoint;
         }
 
-        private List<PointTexel> GetNormalsPointsAndCameraVectors(Model model, List<Vector3> triangle)
+        private List<PointTexel> GetNormalsPointsAndCameraVectors(Model model, List<Vector3> triangle, Model globalModel)
         {
             var result = new List<PointTexel>();
             for (int i = 0; i < triangle.Count; i++)
@@ -122,6 +125,7 @@ namespace CGA_labs.Visualisation
                 var pNC = new PointTexel();
                 pNC.Texel = model.Texels[(int)triangle[i].Y];
                 pNC.Point = model.Points[(int)triangle[i].X];
+                pNC.GlobalPoint = globalModel.Points[(int)triangle[i].X];
                 result.Add(pNC);
             }
 
@@ -138,11 +142,11 @@ namespace CGA_labs.Visualisation
             public float y;
             public Vector3 dTexelByZ;
             public float dOneByZ;
-            public Vector4 dPointByZ;
+            public Vector4 dPoint;
 
             public Vector3 texelByZ;
             public float oneByZ;
-            public Vector4 pointByZ;
+            public Vector4 point;
 
             public LineParams(PointTexel from, PointTexel to)
             {
@@ -154,17 +158,17 @@ namespace CGA_labs.Visualisation
                 dx0 = to.Point.X - from.Point.X;
                 dTexelByZ = (to.Texel / to.Point.W - from.Texel / from.Point.W) / (to.Point.Y - from.Point.Y);
                 dOneByZ = (1 / to.Point.W - 1 / from.Point.W) / (to.Point.Y - from.Point.Y);
-                dPointByZ = (to.Point / to.Point.W - from.Point / from.Point.W) / (to.Point.Y - from.Point.Y);
+                dPoint = (to.GlobalPoint - from.GlobalPoint) / (to.Point.Y - from.Point.Y);
                 texelByZ = from.Texel / from.Point.W;
                 oneByZ = 1 / from.Point.W;
-                pointByZ = from.Point / from.Point.W;
+                point = from.GlobalPoint;
             }
 
             public void IncrementY()
             {
                 texelByZ += dTexelByZ;
                 oneByZ += dOneByZ;
-                pointByZ += dPointByZ;
+                point += dPoint;
                 z += dz;
                 x += dx0 / dy0;
                 y++;
@@ -173,7 +177,7 @@ namespace CGA_labs.Visualisation
 
         protected override void DrawFace(WriteableBitmap bitmap, Model model, List<Vector3> face)
         {
-            var pNCsList = GetNormalsPointsAndCameraVectors(model, face);
+            var pNCsList = GetNormalsPointsAndCameraVectors(model, face, _globalModel);
             var pNCsArr = pNCsList.OrderBy(pNC => pNC.Point.Y).ToArray();
 
             var line01 = new LineParams(pNCsArr[0], pNCsArr[1]);
@@ -189,7 +193,7 @@ namespace CGA_labs.Visualisation
                 var dz = (line01.x - line02.x) != 0 ? (line01.z - line02.z) / (line01.x - line02.x) : 0;
                 var dTexelByZ = (line01.x - line02.x) != 0 ? (line01.texelByZ - line02.texelByZ) / (line01.x - line02.x) : Vector3.Zero;
                 var dOneByZ = (line01.x - line02.x) != 0 ? (line01.oneByZ - line02.oneByZ) / (line01.x - line02.x) : 0;
-                var dPointByZ = (line01.x - line02.x) != 0 ? (line01.pointByZ - line02.pointByZ) / (line01.x - line02.x) : Vector4.Zero;
+                var dPoint = (line01.x - line02.x) != 0 ? (line01.point - line02.point) / (line01.x - line02.x) : Vector4.Zero;
                 int startX = (int)(dx < 0 ? Math.Floor(line01.x) : Math.Ceiling(line01.x));
                 int endX = (int)(dx < 0 ? Math.Ceiling(line02.x) : Math.Floor(line02.x));
                 for (int x = startX; dx * x <= dx * endX; x += dx)
@@ -197,14 +201,14 @@ namespace CGA_labs.Visualisation
                     var z = line01.z + (x - line01.x) * dz;
                     var texelByZ = line01.texelByZ + (x - line01.x) * dTexelByZ;
                     var oneByZ = line01.oneByZ + (x - line01.x) * dOneByZ;
-                    var pointByZ = line01.pointByZ + (x - line01.x) * dPointByZ;
+                    var point = line01.point + (x - line01.x) * dPoint;
 
                     if (x >= 0 && x < bitmap.Width && (int)line01.y >= 0 && (int)line01.y < bitmap.Height &&
                         z < _zBuffer[x, (int)line01.y])
                     {
                         _zBuffer[x, (int)line01.y] = z;
                         var (color, normal, metallic, roughness, ao) = GetByTexel(model, texelByZ / oneByZ);
-                        GetPixelColor = () => GetColorInPoint(color, normal, new Vector3(pointByZ.X, pointByZ.Y, pointByZ.Z) / oneByZ, metallic, roughness, ao);
+                        GetPixelColor = () => GetColorInPoint(color, normal, new Vector3(point.X, point.Y, point.Z), metallic, roughness, ao);
                         DrawPixel(bitmap, new Pixel(x, (int)line01.y, z));
                     }
                 }
@@ -217,7 +221,7 @@ namespace CGA_labs.Visualisation
                 var dz = (line12.x - line02.x) != 0 ? (line12.z - line02.z) / (line12.x - line02.x) : 0;
                 var dTexelByZ = (line12.x - line02.x) != 0 ? (line12.texelByZ - line02.texelByZ) / (line12.x - line02.x) : Vector3.Zero;
                 var dOneByZ = (line12.x - line02.x) != 0 ? (line12.oneByZ - line02.oneByZ) / (line12.x - line02.x) : 0;
-                var dPointByZ = (line12.x - line02.x) != 0 ? (line12.pointByZ - line02.pointByZ) / (line12.x - line02.x) : Vector4.Zero;
+                var dPoint = (line12.x - line02.x) != 0 ? (line12.point - line02.point) / (line12.x - line02.x) : Vector4.Zero;
                 int startX = (int)(dx < 0 ? Math.Floor(line12.x) : Math.Ceiling(line12.x));
                 int endX = (int)(dx < 0 ? Math.Ceiling(line02.x) : Math.Floor(line02.x));
                 for (int x = startX; dx * x <= dx * endX; x += dx)
@@ -225,14 +229,14 @@ namespace CGA_labs.Visualisation
                     var z = line12.z + (x - line12.x) * dz;
                     var texelByZ = line12.texelByZ + (x - line12.x) * dTexelByZ;
                     var oneByZ = line12.oneByZ + (x - line12.x) * dOneByZ;
-                    var pointByZ = line12.pointByZ + (x - line12.x) * dPointByZ;
+                    var point = line12.point + (x - line12.x) * dPoint;
 
                     if (x >= 0 && x < bitmap.Width && (int)line12.y >= 0 && (int)line12.y < bitmap.Height &&
                         z < _zBuffer[x, (int)line12.y])
                     {
                         _zBuffer[x, (int)line12.y] = z;
                         var (color, normal, metallic, roughness, ao) = GetByTexel(model, texelByZ / oneByZ);
-                        GetPixelColor = () => GetColorInPoint(color, normal, new Vector3(pointByZ.X, pointByZ.Y, pointByZ.Z) / oneByZ, metallic, roughness, ao);
+                        GetPixelColor = () => GetColorInPoint(color, normal, new Vector3(point.X,point.Y,point.Z), metallic, roughness, ao);
                         DrawPixel(bitmap, new Pixel(x, (int)line12.y, z));
                     }
                 }

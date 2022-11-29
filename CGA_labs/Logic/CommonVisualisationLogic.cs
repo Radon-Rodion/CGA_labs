@@ -27,5 +27,11 @@ namespace CGA_labs.Logic
             float maxModelZ = model.Points.MaxBy(p => p.Z).Z;
             return maxModelZ * 3;
         }
+
+        public static float FindStartCameraY(Model model)
+        {
+            float maxModelY = model.Points.MaxBy(p => p.Y).Y;
+            return maxModelY/2;
+        }
     }
 }

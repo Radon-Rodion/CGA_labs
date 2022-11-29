@@ -23,13 +23,14 @@ namespace CGA_labs.Visualisation
         public override void DrawModel(WriteableBitmap bitmap, Model model, ModelParams parameters, Model worldModel)
         {
                 var lightsRingRadius = getModelRadius(worldModel, parameters) * 2;
+                var lightSourcesHeight = getModelHeight(worldModel, parameters) / 2;
                 var modelPosition = new Vector3(parameters.TranslationX, parameters.TranslationY, parameters.TranslationZ);
 
                 _lightPositions = new Vector3[] {
-                new Vector3(lightsRingRadius, 0, 0) + modelPosition,
-                new Vector3(-lightsRingRadius, 0, 0) + modelPosition,
-                new Vector3(0, lightsRingRadius, 0) + modelPosition,
-                new Vector3(0, -lightsRingRadius, 0) + modelPosition
+                new Vector3(lightsRingRadius, lightSourcesHeight, 0) + modelPosition,
+                new Vector3(-lightsRingRadius, lightSourcesHeight, 0) + modelPosition,
+                new Vector3(0, lightSourcesHeight, lightsRingRadius) + modelPosition,
+                new Vector3(0, lightSourcesHeight, -lightsRingRadius) + modelPosition
             };
                 _lightColors = new Vector3[]
                 {
@@ -64,7 +65,7 @@ namespace CGA_labs.Visualisation
                 float baseReflectivity = 0.04f;
                 Vector3 C = Vector3.Normalize(_cameraVector - albedo);
                 Vector3 F0 = new Vector3(baseReflectivity, baseReflectivity, baseReflectivity);
-                F0 = F0 + albedo * metallic * (1 - baseReflectivity);
+                F0 = (albedo-F0) * metallic;
 
                 // reflectance equation
                 Vector3 Lo = Vector3.Zero;
@@ -264,6 +265,17 @@ namespace CGA_labs.Visualisation
                         radius = Math.Abs(p.Z - -modelParams.TranslationZ);
                 });
                 return radius;
+        }
+
+        private float getModelHeight(Model model, ModelParams modelParams)
+        {
+            float height = 0;
+            model.Points.ForEach(p =>
+            {
+                if ((p.Y - modelParams.TranslationY) > height)
+                    height = (p.X - modelParams.TranslationX);
+            });
+            return height;
         }
     }
 }

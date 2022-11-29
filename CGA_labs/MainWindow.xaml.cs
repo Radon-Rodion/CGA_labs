@@ -78,7 +78,7 @@ namespace CGA_labs
             {
                 var width = pictureContainer.ActualWidth;
                 var height = pictureContainer.ActualHeight;
-                _params = new ModelParams(width, height, CommonVisualisationLogic.FindStartCameraZ(_model));
+                _params = new ModelParams(width, height, CommonVisualisationLogic.FindStartCameraY(_model), CommonVisualisationLogic.FindStartCameraZ(_model));
 
                 Draw((int)width, (int)height);
             }
@@ -100,7 +100,7 @@ namespace CGA_labs
             {
                 var width = pictureContainer.ActualWidth;
                 var height = pictureContainer.ActualHeight;
-                _params = new ModelParams(width, height, CommonVisualisationLogic.FindStartCameraZ(_model));
+                _params = new ModelParams(width, height, CommonVisualisationLogic.FindStartCameraY(_model) ,CommonVisualisationLogic.FindStartCameraZ(_model));
                 Draw((int)width, (int)height);
             }
         }

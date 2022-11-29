@@ -33,10 +33,10 @@ namespace CGA_labs.Visualisation
             };
                 _lightColors = new Vector3[]
                 {
-                new Vector3(1, 1, 0),
-                new Vector3(0, 1, 0),
-                new Vector3(0, 0, 1),
-                new Vector3(1, 1, 1)
+                new Vector3(100, 100, 100),
+                new Vector3(100, 100, 100),
+                new Vector3(100, 100, 100),
+                new Vector3(100, 100, 100)
                 };
 
                 _modelParams = parameters;

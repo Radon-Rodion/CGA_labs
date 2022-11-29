@@ -63,7 +63,7 @@ namespace CGA_labs.Logic
                                 break;
                         }
                 }
-                var texturesMap = FileToPixelsMap(fileAddress.Replace(".obj", "_tex.png"), 0, 1);
+                var texturesMap = FileToPixelsMap(fileAddress.Replace(".obj", "_tex.png"), 0, 255);
                 var normalsMap = FileToPixelsMap(fileAddress.Replace(".obj", "_nor.png"), -1, 1);
                 var reflectionsMap = FileToPixelsMap(fileAddress.Replace(".obj", "_ref.png"), 0, 1);
 

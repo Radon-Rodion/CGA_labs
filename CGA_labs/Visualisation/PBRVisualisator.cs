@@ -23,7 +23,7 @@ namespace CGA_labs.Visualisation
         public override void DrawModel(WriteableBitmap bitmap, Model model, ModelParams parameters, Model worldModel)
         {
                 var lightsRingRadius = getModelRadius(worldModel, parameters) * 2;
-                var lightSourcesHeight = getModelHeight(worldModel, parameters) / 2;
+                var lightSourcesHeight = getModelHeight(worldModel, parameters);
                 var modelPosition = new Vector3(parameters.TranslationX, parameters.TranslationY, parameters.TranslationZ);
 
                 _lightPositions = new Vector3[] {
@@ -32,12 +32,13 @@ namespace CGA_labs.Visualisation
                 new Vector3(0, lightSourcesHeight, lightsRingRadius) + modelPosition,
                 new Vector3(0, lightSourcesHeight, -lightsRingRadius) + modelPosition
             };
+            int intensivity = 100;
                 _lightColors = new Vector3[]
                 {
-                new Vector3(100, 100, 100),
-                new Vector3(100, 100, 100),
-                new Vector3(100, 100, 100),
-                new Vector3(100, 100, 100)
+                new Vector3(1f * intensivity, 1f * intensivity, 1f* intensivity), //right
+                new Vector3(1f * intensivity, 1f * intensivity, 1f* intensivity), //left
+                new Vector3(1f * intensivity, 1f * intensivity, 1f* intensivity), //back
+                new Vector3(1f * intensivity, 1f * intensivity, 1f* intensivity) //front
                 };
 
                 _modelParams = parameters;
@@ -63,7 +64,6 @@ namespace CGA_labs.Visualisation
                 Vector3 N = Vector3.Normalize(normal);
                 Vector3 V = Vector3.Normalize(_cameraVector - point);
                 float baseReflectivity = 0.04f;
-                Vector3 C = Vector3.Normalize(_cameraVector - albedo);
                 Vector3 F0 = new Vector3(baseReflectivity, baseReflectivity, baseReflectivity);
                 F0 = (albedo-F0) * metallic;
 
@@ -99,17 +99,33 @@ namespace CGA_labs.Visualisation
                 Vector3 ambient = 0.03f * albedo * ao;
                 Vector3 color = ambient + Lo;
 
-                color = color / (color + new Vector3(1, 1, 1));
+            color = AccessFilmic(color);//color / (color + new Vector3(1, 1, 1));
                 double power = 1.0 / 2.2;
                 color = new Vector3((float)Math.Pow(color.X, power), (float)Math.Pow(color.Y, power), (float)Math.Pow(color.Z, power));
 
-                byte blue = (byte)(Math.Min(Math.Max(color.X*255, 0), 255));
-                byte green = (byte)(Math.Min(Math.Max(color.Y*255, 0), 255));
-                byte red = (byte)(Math.Min(Math.Max(color.Z*255, 0), 255));
+                byte blue = (byte)(color.Z*255);
+                byte green = (byte)(color.Y*255);
+                byte red = (byte)(color.X*255);
                 byte alpha = 255;
                 byte[] colorData = { blue, green, red, alpha };
                 return colorData;
             }
+
+        Vector3 AccessFilmic(Vector3 color)
+        {
+            var a = 2.51f;
+            Vector3 b = new Vector3(0.03f, 0.03f, 0.03f);
+            var c = 2.43f;
+            Vector3 d = new Vector3(0.59f, 0.59f, 0.59f);
+            Vector3 e = new Vector3(0.14f, 0.14f, 0.14f);
+            
+            var val = (color*(a*color+b))/(color*(c*color+d)+e);
+            var x = (float)Math.Max(Math.Min(val.X, 1), 0);
+            var y = (float)Math.Max(Math.Min(val.Y, 1), 0);
+            var z = (float)Math.Max(Math.Min(val.Z, 1), 0);
+
+            return new Vector3(x, y, z);
+        }
 
             private struct PointTexel
         {
@@ -273,7 +289,7 @@ namespace CGA_labs.Visualisation
             model.Points.ForEach(p =>
             {
                 if ((p.Y - modelParams.TranslationY) > height)
-                    height = (p.X - modelParams.TranslationX);
+                    height = (p.Y - modelParams.TranslationY);
             });
             return height;
         }

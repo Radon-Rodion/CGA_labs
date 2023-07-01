@@ -1,18 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "WXUUgagp+IPunGtJBEGoXn1TwZnegZXs0R+hYLDJ7MVWC/kHXLsg3JZLDhJz8EqXCk34VaGIQc0P9uXGFeurrg==",
+  "dgSpecHash": "6QnkKWybTUmkRsYDb5F/oVS+Q8pRoPD7r4SnjvwTFfzEEZHtw14Dha18Q2G3E9GVc9/Gz/Anl0sM7dQKA+1x6w==",
   "success": true,
   "projectFilePath": "D:\\CGA\\Labs'\\CGA_labs\\CGA_labs\\CGA_labs.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Pavel.Rafeev\\.nuget\\packages\\microsoft.win32.systemevents\\7.0.0\\microsoft.win32.systemevents.7.0.0.nupkg.sha512",
     "C:\\Users\\Pavel.Rafeev\\.nuget\\packages\\system.drawing.common\\7.0.0\\system.drawing.common.7.0.0.nupkg.sha512"
   ],
-  "logs": [
-    {
-      "code": "NU1803",
-      "level": "Warning",
-      "warningLevel": 1,
-      "message": "You are running the 'restore' operation with an 'HTTP' source, 'http://10.72.193.76:3000/api/packages/B1-Digital/nuget/index.json'. Non-HTTPS access will be removed in a future version. Consider migrating to an 'HTTPS' source."
-    }
-  ]
+  "logs": []
 }
